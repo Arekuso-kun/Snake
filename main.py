@@ -54,6 +54,7 @@ move_up = False
 move_down = False
 move_left = False
 move_right = False
+next_move = False
 
 game_start = False
 game_over_var = False
@@ -66,6 +67,13 @@ clock_start = False
 clock_sec = 0
 clock_min = 0
 clock_hour = 0
+
+movement = 0.0
+movement_up = True
+movement_value = 0.0
+
+def movement_valuef(num):
+    return -(num**2)/40
 
 button_restart = [SQUARE_DIM + SQUARE_DIM*42/2 - SQUARE_DIM*20/2, HEIGHT - SQUARE_DIM*20, SQUARE_DIM*20, SQUARE_DIM*10]
 
@@ -98,6 +106,7 @@ def pressed_button(button):
     if button[0] <= mouse_x <= button[0]+button[2] and button[1] <= mouse_y <= button[1]+button[3]:
         return True
 
+pause = False
 running = True
 
 while running:  # main game loop
@@ -109,7 +118,7 @@ while running:  # main game loop
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             
-            if pressed_button(button_restart):
+            if pressed_button(button_restart) and game_over_var == True:
                 PLAY_FIELD_DIRECTION = [[0 for i in range(0,42)] for j in range(0,42)]
                 PLAY_FIELD_STATUS = [[0 for i in range(0,42)] for j in range(0,42)]
                 for i in range(0,42):
@@ -140,64 +149,78 @@ while running:  # main game loop
                 clock_start = True
             if event.key == pygame.K_RETURN:
                 game_start = True
-            if event.key == pygame.K_w and move_down == False:
-                move_down = move_left = move_right = False
-                move_up = True
-            if event.key == pygame.K_a and move_right == False:
-                move_up = move_down = move_right = False
-                move_left = True
-            if event.key == pygame.K_s and move_up == False:
-                move_up = move_left = move_right = False
-                move_down = True
-            if event.key == pygame.K_d and move_left == False:
-                move_up = move_down = move_left = False
-                move_right = True
+            if event.key == pygame.K_p and game_start == True:
+                if pause == False:
+                    pause = True
+                else:
+                    pause = False
+            if pause == False:
+                if (event.key == pygame.K_w or event.key == pygame.K_UP) and move_down == False and next_move == False:
+                    move_down = move_left = move_right = False
+                    move_up = True
+                    next_move = True
+                if (event.key == pygame.K_a or event.key == pygame.K_LEFT) and move_right == False and next_move == False:
+                    move_up = move_down = move_right = False
+                    move_left = True
+                    next_move = True
+                if (event.key == pygame.K_s or event.key == pygame.K_DOWN) and move_up == False and next_move == False:
+                    move_up = move_left = move_right = False
+                    move_down = True
+                    next_move = True
+                if (event.key == pygame.K_d or event.key == pygame.K_RIGHT) and move_left == False and next_move == False:
+                    move_up = move_down = move_left = False
+                    move_right = True
+                    next_move = True
+        if pause == False:
+            if event.type == clock_event and game_over_var == False and clock_start == True:
+                clock_sec += 1
+                if clock_sec == 60:
+                    clock_min += 1
+                    clock_sec = 0
 
-        if event.type == clock_event and game_over_var == False and clock_start == True:
-            clock_sec += 1
+            if event.type == timer_event and game_over_var == False:
+                next_move = False
+                if move_up == True:
+                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 1
+                    SNAKE_HEAD['y'] += 1
+                    game_over()
 
-        if event.type == timer_event and game_over_var == False:
-            if move_up == True:
-                PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 1
-                SNAKE_HEAD['y'] += 1
-                game_over()
+                elif move_left == True:
+                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 2
+                    SNAKE_HEAD['x'] -= 1
+                    game_over()
 
-            elif move_left == True:
-                PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 2
-                SNAKE_HEAD['x'] -= 1
-                game_over()
+                elif move_down == True:
+                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 3
+                    SNAKE_HEAD['y'] -= 1
+                    game_over()
 
-            elif move_down == True:
-                PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 3
-                SNAKE_HEAD['y'] -= 1
-                game_over()
+                elif move_right == True:
+                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 4
+                    SNAKE_HEAD['x'] += 1
+                    game_over()
 
-            elif move_right == True:
-                PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 4
-                SNAKE_HEAD['x'] += 1
-                game_over()
+                if not(SNAKE_HEAD['x'] == FOOD['x'] and SNAKE_HEAD['y'] == FOOD['y']) and game_over_var == False:
+                    if PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 1:
+                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                        SNAKE_TAIL['y'] += 1
+                        
+                    elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 2:
+                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                        SNAKE_TAIL['x'] -= 1
 
-            if not(SNAKE_HEAD['x'] == FOOD['x'] and SNAKE_HEAD['y'] == FOOD['y']) and game_over_var == False:
-                if PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 1:
-                    PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                    SNAKE_TAIL['y'] += 1
-                    
-                elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 2:
-                    PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                    SNAKE_TAIL['x'] -= 1
+                    elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 3:
+                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                        SNAKE_TAIL['y'] -= 1
 
-                elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 3:
-                    PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                    SNAKE_TAIL['y'] -= 1
-
-                elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 4:
-                    PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                    SNAKE_TAIL['x'] += 1
-            elif game_over_var == False:
-                FOOD = {"x": random.randrange(1, 40), "y": random.randrange(1, 40)}
-                score += 1
-                if high_score < score:
-                    high_score = score
+                    elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 4:
+                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                        SNAKE_TAIL['x'] += 1
+                elif game_over_var == False:
+                    FOOD = {"x": random.randrange(1, 40), "y": random.randrange(1, 40)}
+                    score += 1
+                    if high_score < score:
+                        high_score = score
 
     DISPLAY.fill(WHITE[20])
 
@@ -217,6 +240,9 @@ while running:  # main game loop
                 if PLAY_FIELD_STATUS[i][j] == 1:
                     draw_square(i, j, LIGHT_RED, 3)
 
+        text_pause = font_c_size(16).render("Press P to pause", True, WHITE[90])
+        DISPLAY.blit(text_pause, (WIDTH - SQUARE_DIM - text_pause.get_width(), SQUARE_DIM))
+
         text_score = font_c_size(32).render("High Score", True, WHITE[90])
         DISPLAY.blit(text_score, (WIDTH - SQUARE_DIM*22, SQUARE_DIM*10))
         text_score = font_c_size(32).render(" " + str(high_score), True, WHITE[90])
@@ -231,9 +257,23 @@ while running:  # main game loop
         DISPLAY.blit(text_clock, (WIDTH - SQUARE_DIM*22, SQUARE_DIM*30))
         text_clock = font_c_size(32).render(" " + str("{:02d}".format(clock_min)) + ":" + str("{:02d}".format(clock_sec)), True, WHITE[90])
         DISPLAY.blit(text_clock, (WIDTH - SQUARE_DIM*22, SQUARE_DIM*34))
+
+        if pause == True:
+            text_pause = font_c_size(32).render("Paused", True, WHITE[90])
+            DISPLAY.blit(text_pause, (SQUARE_DIM + SQUARE_DIM*42/2 - text_pause.get_width()/2, HEIGHT - SQUARE_DIM*42/1.5 - text_pause.get_height()/2))
     else:
         text_title = font_c_size(128).render("Snake", True, WHITE[90])
-        DISPLAY.blit(text_title, (WIDTH/2 - text_title.get_width()/2, HEIGHT/2 - text_title.get_height()/2))
+        if movement_up == True:
+            movement -= 1
+            movement_value = movement_valuef(movement)
+            if movement < -20:
+                movement_up = False
+        else:
+            movement += 1
+            movement_value = movement_valuef(movement)
+            if movement > 20:
+                movement_up = True
+        DISPLAY.blit(text_title, (WIDTH/2 - text_title.get_width()/2, HEIGHT/2 - text_title.get_height()/2 - movement_value))
         text_sub_title = font_c_size(32).render("Press Enter to start...", True, WHITE[90])
         DISPLAY.blit(text_sub_title, (WIDTH/2 - text_sub_title.get_width()/2, HEIGHT/1.25 - text_sub_title.get_height()/2))
 
