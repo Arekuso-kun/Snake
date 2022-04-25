@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
 import random
 import pygame
+import pyrebase
 
 pygame.init()  # now use display and fonts
 
@@ -9,6 +11,24 @@ WIDTH = DISPLAY.get_width()
 HEIGHT = DISPLAY.get_height()
 
 pygame.display.set_caption("Snake")
+
+# database
+firebaseConfig = {
+  'apiKey': "AIzaSyCBEDJOVt__ItEoPYMjm5hSWKP4CGD6f1I",
+  'authDomain': "snakeproject-37e7f.firebaseapp.com",
+  'projectId': "snakeproject-37e7f",
+  'storageBucket': "snakeproject-37e7f.appspot.com",
+  'messagingSenderId': "122025097488",
+  'appId': "1:122025097488:web:74b6116afe574b5ab3cd95",
+  'measurementId': "G-LSXLDR8XJ5",
+  'databaseURL':"https://snakeproject-37e7f-default-rtdb.europe-west1.firebasedatabase.app/"
+}
+
+firebase = pyrebase.initialize_app(firebaseConfig)
+
+db = firebase.database()
+
+# end_database
 
 clock = pygame.time.Clock()
 timer_event = pygame.USEREVENT + 1
@@ -56,6 +76,8 @@ move_left = False
 move_right = False
 next_move = False
 
+main_menu_screen = True
+insert_username_screen = False
 game_start = False
 game_over_var = False
 f = open("data\high_score.txt", "rt")
@@ -71,6 +93,12 @@ clock_hour = 0
 movement = 0.0
 movement_up = True
 movement_value = 0.0
+
+leaderbord_show = False
+
+username = ''
+
+
 
 def movement_valuef(num):
     return -(num**2)/40
@@ -143,88 +171,119 @@ while running:  # main game loop
                 clock_min = 0
                 clock_hour = 0
 
-
         if event.type == pygame.KEYDOWN:
+
+            if event.key == pygame.K_RETURN and main_menu_screen == True:
+                insert_username_screen = True
+                main_menu_screen = False
+
+            if insert_username_screen == True:
+                if event.key == pygame.K_BACKSPACE:
+                    username = username[:-1]
+                if event.unicode.isalnum():
+                    username += event.unicode
+                if event.key == pygame.K_RETURN and len(username)>1:
+                    insert_username_screen = False
+                    game_start = True
+
             if game_start == True:
-                clock_start = True
-            if event.key == pygame.K_RETURN:
-                game_start = True
-            if event.key == pygame.K_p and game_start == True:
+
+                if event.key == pygame.K_p:
+                    if pause == False:
+                        pause = True
+                    else:
+                        pause = False
+
+                if event.key == pygame.K_l:
+                    if leaderbord_show == True:
+                        leaderbord_show = False
+                    else:
+                        leaderbord_show = True
+
                 if pause == False:
-                    pause = True
-                else:
-                    pause = False
+                    if (event.key == pygame.K_w or event.key == pygame.K_UP) and move_down == False and next_move == False:
+                        move_down = move_left = move_right = False
+                        move_up = True
+                        next_move = True
+                        clock_start = True
+                    if (event.key == pygame.K_a or event.key == pygame.K_LEFT) and move_right == False and next_move == False:
+                        move_up = move_down = move_right = False
+                        move_left = True
+                        next_move = True
+                        clock_start = True
+                    if (event.key == pygame.K_s or event.key == pygame.K_DOWN) and move_up == False and next_move == False:
+                        move_up = move_left = move_right = False
+                        move_down = True
+                        next_move = True
+                        clock_start = True
+                    if (event.key == pygame.K_d or event.key == pygame.K_RIGHT) and move_left == False and next_move == False:
+                        move_up = move_down = move_left = False
+                        move_right = True
+                        next_move = True
+                        clock_start = True
+
+        if game_start == True:
+
             if pause == False:
-                if (event.key == pygame.K_w or event.key == pygame.K_UP) and move_down == False and next_move == False:
-                    move_down = move_left = move_right = False
-                    move_up = True
-                    next_move = True
-                if (event.key == pygame.K_a or event.key == pygame.K_LEFT) and move_right == False and next_move == False:
-                    move_up = move_down = move_right = False
-                    move_left = True
-                    next_move = True
-                if (event.key == pygame.K_s or event.key == pygame.K_DOWN) and move_up == False and next_move == False:
-                    move_up = move_left = move_right = False
-                    move_down = True
-                    next_move = True
-                if (event.key == pygame.K_d or event.key == pygame.K_RIGHT) and move_left == False and next_move == False:
-                    move_up = move_down = move_left = False
-                    move_right = True
-                    next_move = True
-        if pause == False:
-            if event.type == clock_event and game_over_var == False and clock_start == True:
-                clock_sec += 1
-                if clock_sec == 60:
-                    clock_min += 1
-                    clock_sec = 0
+                if event.type == clock_event and game_over_var == False and clock_start == True:
+                    clock_sec += 1
+                    if clock_sec == 60:
+                        clock_min += 1
+                        clock_sec = 0
 
-            if event.type == timer_event and game_over_var == False:
-                next_move = False
-                if move_up == True:
-                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 1
-                    SNAKE_HEAD['y'] += 1
-                    game_over()
+                if event.type == timer_event and game_over_var == False:
+                    next_move = False
+                    if move_up == True:
+                        PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 1
+                        SNAKE_HEAD['y'] += 1
+                        game_over()
 
-                elif move_left == True:
-                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 2
-                    SNAKE_HEAD['x'] -= 1
-                    game_over()
+                    elif move_left == True:
+                        PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 2
+                        SNAKE_HEAD['x'] -= 1
+                        game_over()
 
-                elif move_down == True:
-                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 3
-                    SNAKE_HEAD['y'] -= 1
-                    game_over()
+                    elif move_down == True:
+                        PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 3
+                        SNAKE_HEAD['y'] -= 1
+                        game_over()
 
-                elif move_right == True:
-                    PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 4
-                    SNAKE_HEAD['x'] += 1
-                    game_over()
+                    elif move_right == True:
+                        PLAY_FIELD_DIRECTION[SNAKE_HEAD['x']][SNAKE_HEAD['y']] = 4
+                        SNAKE_HEAD['x'] += 1
+                        game_over()
 
-                if not(SNAKE_HEAD['x'] == FOOD['x'] and SNAKE_HEAD['y'] == FOOD['y']) and game_over_var == False:
-                    if PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 1:
-                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                        SNAKE_TAIL['y'] += 1
-                        
-                    elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 2:
-                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                        SNAKE_TAIL['x'] -= 1
+                    if not(SNAKE_HEAD['x'] == FOOD['x'] and SNAKE_HEAD['y'] == FOOD['y']) and game_over_var == False:
+                        if PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 1:
+                            PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                            SNAKE_TAIL['y'] += 1
+                            
+                        elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 2:
+                            PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                            SNAKE_TAIL['x'] -= 1
 
-                    elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 3:
-                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                        SNAKE_TAIL['y'] -= 1
+                        elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 3:
+                            PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                            SNAKE_TAIL['y'] -= 1
 
-                    elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 4:
-                        PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
-                        SNAKE_TAIL['x'] += 1
-                elif game_over_var == False:
-                    FOOD = {"x": random.randrange(1, 40), "y": random.randrange(1, 40)}
-                    score += 1
-                    if high_score < score:
-                        high_score = score
+                        elif PLAY_FIELD_DIRECTION[SNAKE_TAIL['x']][SNAKE_TAIL['y']] == 4:
+                            PLAY_FIELD_STATUS[SNAKE_TAIL['x']][SNAKE_TAIL['y']] = 0
+                            SNAKE_TAIL['x'] += 1
+                    elif game_over_var == False:
+                        FOOD = {"x": random.randrange(1, 40), "y": random.randrange(1, 40)}
+                        score += 1
+                        if high_score < score:
+                            high_score = score
 
     DISPLAY.fill(WHITE[20])
 
     (mouse_x, mouse_y) = pygame.mouse.get_pos()
+
+    if insert_username_screen == True:
+        text_name = font_c_size(46).render("Insert player name", True, WHITE[90])
+        DISPLAY.blit(text_name, (WIDTH/2 - text_name.get_width()/2, HEIGHT/3 - text_name.get_height()))
+        text_username = font_c_size(32).render(username, True, WHITE[90])
+        DISPLAY.blit(text_username, (WIDTH/2 - text_username.get_width()/2, HEIGHT/2))
 
     if game_start == True:
         text_mini_title = font_c_size(64).render("Snake", True, WHITE[90])
@@ -261,7 +320,33 @@ while running:  # main game loop
         if pause == True:
             text_pause = font_c_size(32).render("Paused", True, WHITE[90])
             DISPLAY.blit(text_pause, (SQUARE_DIM + SQUARE_DIM*42/2 - text_pause.get_width()/2, HEIGHT - SQUARE_DIM*42/1.5 - text_pause.get_height()/2))
-    else:
+
+        if game_over_var == True:
+            draw_button(button_restart, DISPLAY, "RESTART")
+            f = open("data/high_score.txt", "r+")
+            if high_score > int(f.read()):
+                f.seek(0)
+                f.truncate()
+                f.write(str(high_score))
+                data = {"player": username, "score": high_score, "time_sec": clock_sec, "time_min": clock_min}
+                db.child("leaderboard").push(data)
+            f.close()
+
+        if leaderbord_show == True:
+            pygame.draw.rect(DISPLAY, WHITE[20], [0, 0, WIDTH, HEIGHT])
+            text_lb = font_c_size(64).render("Leaderboard", True, WHITE[90])
+            DISPLAY.blit(text_lb, (WIDTH/2 - text_lb.get_width()/2, SQUARE_DIM*2.25))
+            players = db.child("leaderboard").order_by_child("score").get()
+            space = 0
+            player_list = []
+            for player in players.each():
+                player_list.insert(0, player.val())
+            for player in player_list:
+                text_score = font_c_size(16).render(str(int(space/50 + 1)) + ".\t Name: " + str(player['player']) + "\t Score: " + str(player['score']) + "\t Time: "  + str("{:02d}".format(player['time_min'])) + ":"  + str("{:02d}".format(player['time_sec'])), True, WHITE[90])
+                DISPLAY.blit(text_score, (WIDTH/2 - text_score.get_width()/2, SQUARE_DIM*15.25 + space))
+                space += 50
+
+    if main_menu_screen == True:
         text_title = font_c_size(128).render("Snake", True, WHITE[90])
         if movement_up == True:
             movement -= 1
@@ -276,15 +361,6 @@ while running:  # main game loop
         DISPLAY.blit(text_title, (WIDTH/2 - text_title.get_width()/2, HEIGHT/2 - text_title.get_height()/2 - movement_value))
         text_sub_title = font_c_size(32).render("Press Enter to start...", True, WHITE[90])
         DISPLAY.blit(text_sub_title, (WIDTH/2 - text_sub_title.get_width()/2, HEIGHT/1.25 - text_sub_title.get_height()/2))
-
-    if game_over_var == True:
-        draw_button(button_restart, DISPLAY, "RESTART")
-        f = open("data/high_score.txt", "r+")
-        if high_score > int(f.read()):
-            f.seek(0)
-            f.truncate()
-            f.write(str(high_score))
-        f.close()
 
     clock.tick(60)
 
