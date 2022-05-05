@@ -1,7 +1,8 @@
-from __future__ import unicode_literals
 import random
 import pygame
 import pyrebase
+
+# test
 
 pygame.init()  # now use display and fonts
 
