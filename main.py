@@ -2,8 +2,6 @@ import random
 import pygame
 import pyrebase
 
-# test
-
 pygame.init()  # now use display and fonts
 
 RESOLUTION = (800, 600)
