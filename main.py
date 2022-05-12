@@ -298,8 +298,10 @@ while running:  # main game loop
                 if PLAY_FIELD_STATUS[i][j] == 1:
                     draw_square(i, j, LIGHT_RED, 3)
 
+        text_leaderboard = font_c_size(16).render("Press L for leaderboard", True, WHITE[90])
+        DISPLAY.blit(text_leaderboard, (WIDTH - SQUARE_DIM - text_leaderboard.get_width(), SQUARE_DIM))
         text_pause = font_c_size(16).render("Press P to pause", True, WHITE[90])
-        DISPLAY.blit(text_pause, (WIDTH - SQUARE_DIM - text_pause.get_width(), SQUARE_DIM))
+        DISPLAY.blit(text_pause, (WIDTH - SQUARE_DIM - text_pause.get_width(), SQUARE_DIM*2 + text_pause.get_height()))
 
         text_score = font_c_size(32).render("High Score", True, WHITE[90])
         DISPLAY.blit(text_score, (WIDTH - SQUARE_DIM*22, SQUARE_DIM*10))
@@ -322,14 +324,14 @@ while running:  # main game loop
 
         if game_over_var == True:
             draw_button(button_restart, DISPLAY, "RESTART")
-            f = open("data/high_score.txt", "r+")
-            if high_score > int(f.read()):
-                f.seek(0)
-                f.truncate()
-                f.write(str(high_score))
+            f_read = open("data/high_score.txt", "r+")
+            if high_score > int(f_read.read()):
+                f_write = open("data/high_score.txt", "w+")
+                f_write.write(str(high_score))
                 data = {"player": username, "score": high_score, "time_sec": clock_sec, "time_min": clock_min}
                 db.child("leaderboard").push(data)
-            f.close()
+            f_read.close()
+            f_write.close()
 
         if leaderbord_show == True:
             pygame.draw.rect(DISPLAY, WHITE[20], [0, 0, WIDTH, HEIGHT])
